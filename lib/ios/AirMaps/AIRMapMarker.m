@@ -14,6 +14,7 @@
 #import <React/RCTImageLoader.h>
 #import <React/RCTUtils.h>
 #import <React/UIView+React.h>
+#import "AirFixedzIndexLayer.h"
 
 NSInteger const AIR_CALLOUT_OPEN_ZINDEX_BASELINE = 999;
 
@@ -26,14 +27,6 @@ NSInteger const AIR_CALLOUT_OPEN_ZINDEX_BASELINE = 999;
     MKPinAnnotationView *_pinView;
     BOOL _calloutIsOpen;
     NSInteger _zIndexBeforeOpen;
-}
-
-- (instancetype)initWithFrame:(CGRect)frame {
-    self = [super initWithFrame:frame];
-    if (self) {
-        [self.layer addObserver:self forKeyPath:@"zPosition" options:NSKeyValueObservingOptionNew context:nil];
-    }
-    return self;
 }
 
 - (void)reactSetFrame:(CGRect)frame
@@ -103,7 +96,7 @@ NSInteger const AIR_CALLOUT_OPEN_ZINDEX_BASELINE = 999;
         // if it has a non-null image, it means we want to render a custom marker with the image.
         // In either case, we want to return the AIRMapMarker since it is both an MKAnnotation and an
         // MKAnnotationView all at the same time.
-        self.layer.zPosition = self.zIndex;
+        [(AirFixedzIndexLayer *) self.layer setFixedzPosition:self.zIndex];
         return self;
     }
 }
@@ -339,21 +332,16 @@ NSInteger const AIR_CALLOUT_OPEN_ZINDEX_BASELINE = 999;
     }
 }
 
++ (Class)layerClass
+{
+    return [AirFixedzIndexLayer class];
+}
+
 - (void)setZIndex:(NSInteger)zIndex
 {
     _zIndexBeforeOpen = zIndex;
     _zIndex = _calloutIsOpen ? zIndex + AIR_CALLOUT_OPEN_ZINDEX_BASELINE : zIndex;
-    self.layer.zPosition = zIndex;
-}
-
-- (void)dealloc {
-    [self.layer removeObserver:self forKeyPath:@"zPosition"];
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
-    if ([keyPath isEqualToString:@"zPosition"]) {
-        self.layer.zPosition = _zIndex;
-    }
+    [(AirFixedzIndexLayer *) self.layer setFixedzPosition:zIndex];
 }
 
 @end
